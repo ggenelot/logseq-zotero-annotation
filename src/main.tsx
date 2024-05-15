@@ -20,7 +20,7 @@ if (isDevelopment) {
     })
 
     logseq.App.registerUIItem('toolbar', {
-      key: 'logseq-plugin-react-boilerplate',
+      key: 'logseq-zotero-annotation',
       template: '<a data-on-click="show" class="button"><i class="ti ti-window"></i></a>',
     })
 
