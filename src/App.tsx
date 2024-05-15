@@ -2,53 +2,92 @@ import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import './App.css';
 
-const App: React.FC<{ env: string }> = ({ env }) => {
-  // Utiliser useState pour gérer l'état de la couleur de fond
-  const [backgroundColor, setBackgroundColor] = useState<string>('bg-gradient-to-tr from-green-300 via-green-500 to-green-700');
-  const [annotations, setAnnotations] = useState<any[]>([]); // Initialisation de la variable d'état annotations
+interface Annotation {
+  emID: string;
+  parentItemID: string;
+  type: string;
+  // Ajoutez les autres propriétés d'annotation ici
+}
 
-  // Méthode appelée lorsque l'utilisateur clique sur le bouton pour changer la couleur de fond
+const App: React.FC<{ env: string }> = ({ env }) => {
+  const [backgroundColor, setBackgroundColor] = useState<string>('bg-gradient-to-tr from-green-300 via-green-500 to-green-700');
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+
   function changeBackgroundColor() {
-    setBackgroundColor('bg-blue-500'); // Changer la couleur de fond en bleu
+    setBackgroundColor('bg-blue-500');
   }
 
   function closeWindow() {
     logseq.hideMainUI();
   }
 
-  const [output, setOutput] = useState<string>(''); // État pour stocker la sortie du backend
+  // Fonction pour traiter l'output et mettre à jour les annotations
+  function processOutput(output: string) {
+    const lines = output.split('\n');
+    const newAnnotations: Annotation[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const columns = lines[i].split(' ');
+      const annotation: Annotation = {
+        emID: columns[0],
+        parentItemID: columns[1],
+        type: columns[2],
+        // Ajoutez d'autres propriétés d'annotation ici
+      };
+      newAnnotations.push(annotation);
+    }
+    setAnnotations(newAnnotations);
+  }
 
-  function runPythonScript() {
-    fetch('http://localhost:8080/run-script', { // Assurez-vous que l'URL correspond à votre backend
+  function getZoteroAnnotations() {
+    fetch('http://localhost:8080/get-zotero-annotations', {
       method: 'POST',
     })
-    .then(response => response.json())
+    .then(response => response.text())
     .then(data => {
-      if (data.output) {
-        setOutput(data.output); // Mettre à jour l'état avec la sortie du backend
-      } else {
-        console.error('Error:', data.error);
-      }
+      processOutput(data);
     })
     .catch(error => {
       console.error('Error:', error);
     });
   }
 
-
   return (
     <div className={`w-screen h-screen flex items-center justify-center text-white grey-300`}>
-      {/* Votre contenu d'interface utilisateur */}
       <div className="w-screen h-screen fixed top-0 left-0" onClick={() => logseq.hideMainUI()}></div>
       <div className={`w-5/6 h-5/6 z-0 ${backgroundColor} flex flex-col items-center justify-center`}>
         <h1 className="font-bold text-4xl">Plugin de Gabriel</h1>
 
-        {/* Bouton pour changer la couleur de fond */}
         <button onClick={changeBackgroundColor} className="button"><i className="ti ti-window"></i> Change Background Color</button>
         <button onClick={closeWindow} className="button"><i className="ti ti-window"></i> Fermer la fenetre</button>
-        <button onClick={runPythonScript} className="button"><i className="ti ti-code"></i> Run Python Script</button>
+        <button onClick={getZoteroAnnotations} className="button"><i className="ti ti-code"></i> Get Zotero Annotations</button>
 
-        {output && <div className="mt-4">{output}</div>}
+        {annotations.length > 0 && (
+          <div className="mt-4">
+            <h3 className="text-2xl font-semibold">Zotero Annotations</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Item ID</th>
+                  <th>Parent Item ID</th>
+                  <th>Type</th>
+                  {/* Ajoutez les autres en-têtes de colonnes ici */}
+                </tr>
+              </thead>
+              <tbody>
+                {annotations.map((annotation, index) => (
+                  <tr key={index}>
+                    <td>{annotation.emID}</td>
+                    <td>{annotation.parentItemID}</td>
+                    <td>{annotation.type}</td>
+                    {/* Ajoutez les autres cellules de données ici */}
+                  </tr>
+                ))}
+                
+              </tbody>
+            </table>
+            
+          </div>
+        )}
       </div>
     </div>
   );
