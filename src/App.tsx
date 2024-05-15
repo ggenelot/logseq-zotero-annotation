@@ -19,20 +19,13 @@ const App: React.FC<{ env: string }> = ({ env }) => {
   const [output, setOutput] = useState<string>(''); // État pour stocker la sortie du backend
 
   function runPythonScript() {
-    console.log('Fetching data from backend...');
-  
-    fetch('http://localhost:8080/run-script', {
+    fetch('http://localhost:8080/run-script', { // Assurez-vous que l'URL correspond à votre backend
       method: 'POST',
     })
-    .then(response => {
-      console.log('Response received from backend:', response);
-      return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-      console.log('Data received from backend:', data);
-      if (data.annotations) {
-        console.log('Updating annotations state:', data.annotations);
-        setAnnotations(data.annotations);
+      if (data.output) {
+        setOutput(data.output); // Mettre à jour l'état avec la sortie du backend
       } else {
         console.error('Error:', data.error);
       }
@@ -55,31 +48,7 @@ const App: React.FC<{ env: string }> = ({ env }) => {
         <button onClick={closeWindow} className="button"><i className="ti ti-window"></i> Fermer la fenetre</button>
         <button onClick={runPythonScript} className="button"><i className="ti ti-code"></i> Run Python Script</button>
 
-        {annotations.length > 0 && (
-          <div className="mt-4">
-            <h3 className="text-2xl font-semibold">Zotero Annotations</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Item ID</th>
-                  <th>Parent Item ID</th>
-                  <th>Type</th>
-                  {/* Ajoutez les autres en-têtes de colonnes ici */}
-                </tr>
-              </thead>
-              <tbody>
-                {annotations.map((annotation, index) => (
-                  <tr key={index}>
-                    <td>{annotation.itemID}</td>
-                    <td>{annotation.parentItemID}</td>
-                    <td>{annotation.type}</td>
-                    {/* Ajoutez les autres cellules de données ici */}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        {output && <div className="mt-4">{output}</div>}
       </div>
     </div>
   );
